@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Что такое Интернет? — Презентация</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#06080f;--surface:#0d1117;--surface2:#161b22;--border:#21262d;
+  --text:#e6edf3;--muted:#9aa7b4;
+  --blue:#58a6ff;--purple:#bc8cff;--green:#3fb950;--orange:#f0883e;--red:#f85149;--cyan:#39d2c0;--pink:#f778ba;
+  --font:'Inter',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:var(--font)}
+
+#netCanvas{position:fixed;inset:0;z-index:0;opacity:.35}
+
+.progress-track{position:fixed;top:0;left:0;right:0;height:3px;z-index:100;background:rgba(255,255,255,.06)}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--purple),var(--cyan));transition:width .5s cubic-bezier(.4,0,.2,1);box-shadow:0 0 12px rgba(88,166,255,.5)}
+
+.slide-counter{position:fixed;top:16px;right:24px;z-index:100;font-family:var(--mono);font-size:14px;color:var(--muted);letter-spacing:.1em}
+.slide-counter .cur{color:var(--blue);font-weight:700;font-size:17px}
+
+.deck{position:relative;width:100%;height:100%;z-index:1}
+.slide{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:60px 40px 100px;opacity:0;visibility:hidden;transform:translateY(30px) scale(.97);transition:all .6s cubic-bezier(.4,0,.2,1)}
+.slide.active{opacity:1;visibility:visible;transform:none;z-index:2}
+.slide.exit-up{opacity:0;transform:translateY(-30px) scale(.97)}
+.slide-inner{width:min(1180px,100%);max-height:100%;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--border) transparent;padding-right:8px}
+
+.a{opacity:0;transform:translateY(24px);transition:opacity .5s ease,transform .6s cubic-bezier(.22,.85,.3,1)}
+.slide.active .a{opacity:1;transform:none;transition-delay:calc(var(--i,0)*.09s + .2s)}
+
+/* ── Типографика: КРУПНЫЙ ТЕКСТ ── */
+.kicker{display:inline-flex;align-items:center;gap:10px;font-family:var(--mono);font-size:13.5px;letter-spacing:.25em;text-transform:uppercase;color:var(--blue);margin-bottom:16px}
+.kicker::before{content:'';width:32px;height:2px;background:var(--blue)}
+h1{font-size:clamp(2.6rem,6.4vw,4.6rem);font-weight:900;line-height:1.05;letter-spacing:-.03em;margin-bottom:20px}
+h1 .grad{background:linear-gradient(135deg,var(--blue),var(--purple),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+h2{font-size:clamp(1.9rem,4vw,3rem);font-weight:800;line-height:1.15;letter-spacing:-.02em;margin-bottom:20px}
+h2 em{font-style:normal;color:var(--blue)}
+p,.desc{font-size:clamp(1.15rem,1.7vw,1.45rem);line-height:1.65;color:var(--muted);max-width:70ch}
+.tag{display:inline-block;font-family:var(--mono);font-size:13px;padding:5px 12px;border-radius:20px;border:1px solid var(--border);color:var(--muted);letter-spacing:.05em}
+
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:center}
+.flex-col{display:flex;flex-direction:column;gap:16px}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;position:relative;overflow:hidden;transition:transform .3s,border-color .3s}
+.card:hover{transform:translateY(-4px);border-color:rgba(88,166,255,.3)}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--blue),transparent);opacity:0;transition:opacity .3s}
+.card:hover::before{opacity:1}
+.card h3{font-size:1.2rem;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:10px}
+.card p{font-size:1.08rem;line-height:1.6}
+.card .icon{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;font-size:21px;flex-shrink:0}
+
+.keywords{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}
+.kw{font-family:var(--mono);font-size:14px;padding:7px 16px;border-radius:8px;background:rgba(88,166,255,.08);border:1px solid rgba(88,166,255,.2);color:var(--blue);letter-spacing:.04em;transition:.25s}
+.kw:hover{background:rgba(88,166,255,.15);transform:translateY(-2px)}
+
+/* ── Скорости ── */
+.speed-row{display:flex;align-items:center;gap:14px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.speed-row:last-child{border-bottom:none}
+.speed-label{width:70px;font-size:.95rem;font-weight:600;flex-shrink:0}
+.speed-track{flex:1;height:11px;background:rgba(255,255,255,.05);border-radius:5px;overflow:hidden}
+.speed-bar{height:100%;border-radius:5px;width:0;transition:width 1.2s cubic-bezier(.22,.85,.3,1) .5s}
+.slide.active .speed-bar{width:var(--w)}
+
+/* ── Стек протоколов ── */
+.stack{display:flex;flex-direction:column;gap:0;max-width:440px}
+.stack-layer{padding:18px 24px;text-align:center;font-weight:700;font-size:1.12rem;border:1px solid var(--border);position:relative;transition:.3s}
+.stack-layer:first-child{border-radius:14px 14px 0 0}
+.stack-layer:last-child{border-radius:0 0 14px 14px}
+.stack-layer:hover{transform:scaleX(1.04)}
+.stack-layer .sub{font-weight:400;font-size:.92rem;color:rgba(255,255,255,.6);margin-top:4px}
+
+/* ── IP-визуал ── */
+.ip-visual{display:flex;align-items:center;gap:4px;font-family:var(--mono);font-size:clamp(1.5rem,3vw,2.4rem);font-weight:700;margin:20px 0;flex-wrap:wrap}
+.ip-octet{padding:8px 14px;border-radius:10px;background:var(--surface2);border:1px solid var(--border)}
+.ip-dot{color:var(--muted)}
+.ip-bracket{font-size:.85rem;color:var(--muted);text-align:center;margin-top:4px;font-family:var(--mono)}
+.ipv6-visual{font-family:var(--mono);font-size:clamp(.95rem,1.6vw,1.25rem);color:var(--purple);background:var(--surface);padding:16px 20px;border-radius:10px;border:1px solid rgba(188,140,255,.2);word-break:break-all;margin:12px 0}
+
+/* ── DNS-дерево ── */
+.dns-tree{display:flex;flex-direction:column;align-items:center;gap:0;margin:20px 0}
+.dns-level{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;position:relative;padding:8px 0}
+.dns-node{padding:9px 20px;border-radius:10px;font-family:var(--mono);font-size:1rem;font-weight:600;border:1px solid var(--border);background:var(--surface);transition:.3s;cursor:default}
+.dns-node:hover{border-color:var(--blue);transform:translateY(-2px)}
+.dns-node.root{background:linear-gradient(135deg,rgba(88,166,255,.15),rgba(188,140,255,.15));border-color:var(--blue);color:var(--blue)}
+.dns-connector{width:2px;height:20px;background:var(--border);margin:0 auto}
+
+/* ── Поток шагов ── */
+.flow{display:flex;align-items:center;gap:0;flex-wrap:wrap;justify-content:center;margin:24px 0}
+.flow-step{display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px;background:var(--surface);border:1px solid var(--border);border-radius:14px;min-width:150px;text-align:center;transition:.3s}
+.flow-step:hover{border-color:var(--cyan);transform:translateY(-3px)}
+.flow-step .num{font-family:var(--mono);font-size:12px;color:var(--cyan);letter-spacing:.15em}
+.flow-step .label{font-size:1.02rem;font-weight:600;line-height:1.4}
+.flow-arrow{font-size:1.6rem;color:var(--muted);padding:0 8px;animation:pulse-arrow 1.5s ease-in-out infinite}
+@keyframes pulse-arrow{0%,100%{opacity:.4}50%{opacity:1}}
+
+/* ── Выводы ── */
+.concl-item{display:flex;gap:16px;align-items:flex-start;padding:18px 22px;background:var(--surface);border:1px solid var(--border);border-radius:12px;border-left:3px solid var(--green);transition:.3s}
+.concl-item:hover{border-left-color:var(--blue);background:var(--surface2)}
+.concl-item .ci-icon{font-size:1.5rem;flex-shrink:0;margin-top:2px}
+.concl-item .ci-text{font-size:1.14rem;line-height:1.6}
+.concl-item .ci-text b{color:var(--text)}
+
+/* ── Рисунки ── */
+.fig-frame{position:relative;border-radius:16px;overflow:hidden;border:1px solid var(--border);background:var(--surface)}
+.fig-frame svg{width:100%;height:100%;display:block}
+.fig-caption{font-family:var(--mono);font-size:12.5px;color:var(--muted);padding:10px 16px;border-top:1px solid var(--border);letter-spacing:.08em}
+.fig-caption::before{content:'▍';color:var(--blue);margin-right:6px}
+
+/* ── ЗАДАЧИ СО СКРЫТЫМ РЕШЕНИЕМ ── */
+.task-card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:26px 28px;display:flex;flex-direction:column;gap:16px;position:relative;overflow:hidden;align-self:start}
+.task-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--orange),var(--pink))}
+.task-num{font-family:var(--mono);font-size:12.5px;letter-spacing:.28em;color:var(--orange);text-transform:uppercase}
+.task-text{font-size:clamp(1.12rem,1.7vw,1.4rem);line-height:1.6;color:var(--text)}
+.task-text .mono{font-family:var(--mono);color:var(--cyan);background:rgba(57,210,192,.08);padding:2px 9px;border-radius:6px;font-size:.94em;word-break:break-all}
+.task-hint{font-size:1rem;color:var(--muted);border-left:2px solid var(--border);padding-left:14px;line-height:1.55}
+.reveal-btn{align-self:flex-start;display:inline-flex;align-items:center;gap:10px;background:rgba(240,136,62,.1);border:1.5px solid var(--orange);color:var(--orange);font-family:var(--mono);font-size:14.5px;font-weight:600;padding:13px 24px;border-radius:12px;cursor:pointer;transition:.25s;letter-spacing:.04em}
+.reveal-btn:hover{background:var(--orange);color:#000;transform:translateY(-2px);box-shadow:0 8px 22px rgba(240,136,62,.35)}
+.reveal-btn .eye{font-size:17px;transition:transform .3s}
+.reveal-btn.opened{border-color:var(--green);color:var(--green);background:rgba(63,185,80,.08)}
+.reveal-btn.opened:hover{background:var(--green);color:#000;box-shadow:0 8px 22px rgba(63,185,80,.35)}
+.answer{max-height:0;opacity:0;overflow:hidden;transition:max-height .6s cubic-bezier(.4,0,.2,1),opacity .45s ease}
+.answer.open{max-height:460px;opacity:1}
+.answer-inner{border:1px solid rgba(63,185,80,.35);background:rgba(63,185,80,.06);border-radius:14px;padding:20px 22px}
+.answer-label{font-family:var(--mono);font-size:12px;letter-spacing:.28em;color:var(--green);text-transform:uppercase;margin-bottom:12px}
+.answer-val{font-family:var(--mono);font-size:clamp(1.3rem,2.2vw,1.8rem);font-weight:700;color:var(--green);word-break:break-all;text-shadow:0 0 20px rgba(63,185,80,.3)}
+.answer-explain{margin-top:14px;font-size:1.06rem;color:var(--muted);line-height:1.6}
+.answer-explain b{color:var(--text)}
+.answer-explain .mono{font-family:var(--mono);color:var(--cyan)}
+.teacher-note{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:13px;color:var(--muted);letter-spacing:.08em;margin-bottom:8px}
+.teacher-note::before{content:'👁';font-size:15px}
+
+/* ── Управление ── */
+.controls{position:fixed;bottom:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:center;gap:12px;padding:16px 24px 22px;background:linear-gradient(transparent,rgba(6,8,15,.95) 40%)}
+.ctrl-btn{width:50px;height:50px;border-radius:14px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;display:grid;place-items:center;transition:.25s}
+.ctrl-btn svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ctrl-btn:hover:not(:disabled){border-color:var(--blue);color:var(--blue);transform:translateY(-3px);box-shadow:0 8px 24px rgba(88,166,255,.15)}
+.ctrl-btn:disabled{opacity:.25;cursor:default}
+.ctrl-btn.primary{background:var(--blue);border-color:var(--blue);color:#000}
+.ctrl-btn.primary:hover:not(:disabled){background:#79bbff;box-shadow:0 8px 24px rgba(88,166,255,.35)}
+.dots{display:flex;gap:6px;padding:0 16px;flex-wrap:wrap;justify-content:center;max-width:420px}
+.dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.15);border:none;cursor:pointer;transition:.3s;padding:0}
+.dot.active{width:28px;border-radius:4px;background:var(--blue)}
+.dot:hover:not(.active){background:rgba(255,255,255,.3)}
+.hint{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.28);letter-spacing:.15em;z-index:99;transition:opacity .5s}
+.hint kbd{border:1px solid rgba(255,255,255,.2);padding:1px 5px;border-radius:3px;margin:0 2px}
+.hint.hidden{opacity:0}
+
+@media(max-width:860px){
+  .slide{padding:50px 20px 110px}
+  .grid-2{grid-template-columns:1fr}
+  .flow{flex-direction:column}
+  .flow-arrow{transform:rotate(90deg)}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition-duration:0s!important}
+}
+</style>
+</head>
+<body>
+
+<canvas id="netCanvas"></canvas>
+<div class="progress-track"><div class="progress-fill" id="progFill"></div></div>
+<div class="slide-counter"><span class="cur" id="cCur">01</span> / <span id="cTot">12</span></div>
+
+<main class="deck" id="deck">
+
+<!-- ═══ 1. ТИТУЛ ═══ -->
+<section class="slide active">
+<div class="slide-inner" style="text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:70vh">
+  <div class="kicker a" style="--i:0">Урок информатики</div>
+  <h1 class="a" style="--i:1">Что такое<br><span class="grad">Интернет?</span></h1>
+  <p class="desc a" style="--i:2;text-align:center;margin:0 auto 28px">Глобальная компьютерная сеть, маршрутизаторы, протоколы TCP/IP, IP-адреса и система доменных имён — как устроена «сеть сетей».</p>
+  <div class="keywords a" style="--i:3;justify-content:center">
+    <span class="kw">маршрутизатор</span><span class="kw">провайдер</span><span class="kw">протоколы TCP/IP</span><span class="kw">IP-адрес</span><span class="kw">домен</span><span class="kw">DNS</span>
+  </div>
+  <div class="a" style="--i:5;margin-top:40px">
+    <svg width="260" height="100" viewBox="0 0 260 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="8" fill="#58a6ff" opacity=".7"><animate attributeName="opacity" values=".4;1;.4" dur="2s" repeatCount="indefinite"/></circle>
+      <circle cx="130" cy="30" r="8" fill="#bc8cff" opacity=".7"><animate attributeName="opacity" values=".4;1;.4" dur="2.3s" repeatCount="indefinite"/></circle>
+      <circle cx="130" cy="70" r="8" fill="#39d2c0" opacity=".7"><animate attributeName="opacity" values=".4;1;.4" dur="1.8s" repeatCount="indefinite"/></circle>
+      <circle cx="210" cy="50" r="8" fill="#f0883e" opacity=".7"><animate attributeName="opacity" values=".4;1;.4" dur="2.1s" repeatCount="indefinite"/></circle>
+      <line x1="58" y1="50" x2="122" y2="33" stroke="#58a6ff" stroke-width="1.5" opacity=".3"/>
+      <line x1="58" y1="50" x2="122" y2="67" stroke="#58a6ff" stroke-width="1.5" opacity=".3"/>
+      <line x1="138" y1="33" x2="202" y2="50" stroke="#bc8cff" stroke-width="1.5" opacity=".3"/>
+      <line x1="138" y1="67" x2="202" y2="50" stroke="#39d2c0" stroke-width="1.5" opacity=".3"/>
+      <line x1="130" y1="38" x2="130" y2="62" stroke="#8b949e" stroke-width="1" opacity=".2"/>
+    </svg>
+  </div>
+</div>
+</section>
+
+<!-- ═══ 2. ЧТО ТАКОЕ ИНТЕРНЕТ ═══ -->
+<section class="slide">
+<div class="slide-inner">
+  <div class="kicker a" style="--i:0"><span>01</span> Введение</div>
+  <h2 class="a" style="--i:1">Интернет — <em>сеть сетей</em></h2>
+  <div class="grid-2">
+    <div class="flex-col">
+      <p class="a" style="--i:2">Слово <b style="color:var(--blue)">Internet</b> возникло как сокращение от <b style="color:var(--cyan)">Interconnected Networks</b> — «объединённые сети» или «сеть сетей».</p>
+      <p class="a" style="--i:3">Первая версия была построена в <b style="color:var(--orange)">60-х годах XX века</b> американскими военными. Задача: создать сеть, работоспособную при разрушении 70 % узлов.</p>
+      <p class="a" style="--i:4">У такой сети <b style="color:var(--red)">не должно быть центра</b>, от которого зависит работа. Соединить каждый компьютер с каждым невозможно — нужно слишком много линий.</p>
+      <p class="a" style="--i:5">Решение — <b style="color:var(--green)">распределённая сеть</b> из ячеек, как рыболовная сетка.</p>
+    </div>
+    <div class="a" style="--i:4">
+      <div class="fig-frame">
+        <svg viewBox="0 0 500 400" xmlns="http://www.w3.org/2000/svg">
+          <rect width="500" height="400" fill="#0d1117"/>
+          <g stroke="#21262d" stroke-width="1.5">
+            <line x1="100" y1="80" x2="250" y2="60"/><line x1="250" y1="60" x2="400" y2="90"/>
+            <line x1="100" y1="80" x2="60" y2="200"/><line x1="60" y1="200" x2="150" y2="300"/>
+            <line x1="250" y1="60" x2="200" y2="180"/><line x1="250" y1="60" x2="320" y2="190"/>
+            <line x1="400" y1="90" x2="440" y2="210"/><line x1="440" y1="210" x2="350" y2="310"/>
+            <line x1="200" y1="180" x2="320" y2="190"/><line x1="200" y1="180" x2="60" y2="200"/>
+            <line x1="200" y1="180" x2="150" y2="300"/><line x1="320" y1="190" x2="440" y2="210"/>
+            <line x1="320" y1="190" x2="350" y2="310"/><line x1="150" y1="300" x2="250" y2="340"/>
+            <line x1="350" y1="310" x2="250" y2="340"/><line x1="150" y1="300" x2="350" y2="310"/>
+            <line x1="100" y1="80" x2="200" y2="180"/><line x1="400" y1="90" x2="320" y2="190"/>
+            <line x1="250" y1="340" x2="200" y2="180"/><line x1="250" y1="340" x2="320" y2="190"/>
+          </g>
+          <circle r="4" fill="#58a6ff"><animateMotion dur="3s" repeatCount="indefinite" path="M100,80 L250,60 L320,190 L350,310"/></circle>
+          <circle r="4" fill="#3fb950"><animateMotion dur="4s" repeatCount="indefinite" path="M440,210 L320,190 L200,180 L60,200"/></circle>
+          <circle r="3" fill="#f0883e"><animateMotion dur="2.5s" repeatCount="indefinite" path="M150,300 L250,340 L350,310 L440,210"/></circle>
+          <g>
+            <circle cx="100" cy="80" r="10" fill="#161b22" stroke="#58a6ff" stroke-width="2"/>
+            <circle cx="250" cy="60" r="10" fill="#161b22" stroke="#bc8cff" stroke-width="2"/>
+            <circle cx="400" cy="90" r="10" fill="#161b22" stroke="#58a6ff" stroke-width="2"/>
+            <circle cx="60" cy="200" r="10" fill="#161b22" stroke="#39d2c0" stroke-width="2"/>
+            <circle cx="200" cy="180" r="12" fill="#161b22" stroke="#f0883e" stroke-width="2.5"/>
+            <circle cx="320" cy="190" r="12" fill="#161b22" stroke="#f0883e" stroke-width="2.5"/>
+            <circle cx="440" cy="210" r="10" fill="#161b22" stroke="#39d2c0" stroke-width="2"/>
+            <circle cx="150" cy="300" r="10" fill="#161b22" stroke="#bc8cff" stroke-width="2"/>
+            <circle cx="350" cy="310" r="10" fill="#161b22" stroke="#58a6ff" stroke-width="2"/>
+            <circle cx="250" cy="340" r="10" fill="#161b22" stroke="#3fb950" stroke-width="2"/>
+          </g>
+          <text x="200" y="165" fill="#f0883e" font-size="12" font-family="monospace">router</text>
+          <text x="322" y="175" fill="#f0883e" font-size="12" font-family="monospace">router</text>
+        </svg>
+        <div class="fig-caption">Рис. 1.10 · Распределённая сеть (mesh-топология)</div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ═══ 3. МАРШРУТИЗАТОРЫ ═══ -->
+<section class="slide">
+<div class="slide-inner">
+  <div class="kicker a" style="--i:0"><span>02</span> Архитектура</div>
+  <h2 class="a" style="--i:1">Маршрутизаторы и <em>отсутствие центра</em></h2>
+  <div class="grid-2">
+    <div class="flex-col">
+      <div class="card a" style="--i:2">
+        <h3><span class="icon" style="background:rgba(88,166,255,.12);color:var(--blue)">⟁</span> Маршрутизатор</h3>
+        <p>Компьютер в узле сети, который направляет каждый пакет данных <b style="color:var(--blue)">кратчайшим маршрутом</b> по адресу в заголовке пакета. Если канал вышел из строя — пакет идёт по более длинному, но работающему пути.</p>
+      </div>
+      <div class="card a" style="--i:3">
+        <h3><span class="icon" style="background:rgba(248,81,73,.12);color:var(--red)">⊘</span> Нет единого центра</h3>
+        <p>В Интернете нет единого центра управления. Если бы он существовал, для разрушения всей сети было бы достаточно уничтожить этот центр.</p>
+      </div>
+      <div class="card a" style="--i:4">
+        <h3><span class="icon" style="background:rgba(63,185,80,.12);color:var(--green)">⇅</span> Клиент-сервер</h3>
+        <p>Информация хранится на серверах, связанных скоростными линиями (оптоволокно, спутники). Программа-клиент запрашивает данные, сервер возвращает ответ.</p>
+      </div>
+    </div>
+    <div class="a" style="--i:3">
+      <div class="fig-frame">
+        <svg viewBox="0 0 460 420" xmlns="http://www.w3.org/2000/svg">
+          <rect width="460" height="420" fill="#0d1117"/>
+          <rect x="30" y="170" width="90" height="65" rx="8" fill="#161b22" stroke="#39d2c0" stroke-width="2"/>
+          <text x="75" y="200" text-anchor="middle" fill="#39d2c0" font-size="13" font-family="monospace">Клиент</text>
+          <text x="75" y="218" text-anchor="middle" fill="#9aa7b4" font-size="11" font-family="monospace">запрос</text>
+          <rect x="170" y="100" width="60" height="50" rx="6" fill="#161b22" stroke="#f0883e" stroke-width="2"/>
+          <text x="200" y="130" text-anchor="middle" fill="#f0883e" font-size="11" font-family="monospace">R1</text>
+          <rect x="170" y="250" width="60" height="50" rx="6" fill="#161b22" stroke="#f0883e" stroke-width="2"/>
+          <text x="200" y="280" text-anchor="middle" fill="#f0883e" font-size="11" font-family="monospace">R2</text>
+          <rect x="280" y="170" width="60" height="50" rx="6" fill="#161b22" stroke="#f0883e" stroke-width="2"/>
+          <text x="310" y="200" text-anchor="middle" fill="#f0883e" font-size="11" font-family="monospace">R3</text>
+          <rect x="370" y="160" width="70" height="80" rx="8" fill="#161b22" stroke="#58a6ff" stroke-width="2"/>
+          <text x="405" y="195" text-anchor="middle" fill="#58a6ff" font-size="13" font-family="monospace">Сервер</text>
+          <text x="405" y="215" text-anchor="middle" fill="#9aa7b4" font-size="11" font-family="monospace">ответ</text>
+          <line x1="120" y1="195" x2="170" y2="130" stroke="#21262d" stroke-width="1.5"/>
+          <line x1="120" y1="210" x2="170" y2="270" stroke="#21262d" stroke-width="1.5"/>
+          <line x1="230" y1="125" x2="280" y2="185" stroke="#21262d" stroke-width="1.5"/>
+          <line x1="230" y1="275" x2="280" y2="205" stroke="#21262d" stroke-width="1.5"/>
+          <line x1="340" y1="195" x2="370" y2="195" stroke="#21262d" stroke-width="1.5"/>
+          <line x1="200" y1="150" x2="200" y2="250" stroke="#21262d" stroke-width="1" stroke-dasharray="4 4"/>
+          <circle r="5" fill="#3fb950"><animateMotion dur="3s" repeatCount="indefinite" path="M75,195 L200,125 L310,195 L405,195"/></circle>
+          <circle r="5" fill="#58a6ff"><animateMotion dur="3.5s" repeatCount="indefinite" path="M405,210 L310,200 L200,275 L75,215"/></circle>
+          <g transform="translate(255,155)" opacity=".8">
+            <line x1="-6" y1="-6" x2="6" y2="6" stroke="#f85149" stroke-width="2.5"/>
+            <line x1="6" y1="-6" x2="-6" y2="6" stroke="#f85149" stroke-width="2.5"/>
+          </g>
+          <text x="230" y="380" text-anchor="middle" fill="#9aa7b4" font-size="13" font-family="sans-serif">Пакет обходит неисправный участок</text>
+        </svg>
+        <div class="fig-caption">Маршрутизация: пакеты находят путь даже при обрыве линии</div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ═══ 4. ПОДКЛЮЧЕНИЕ ═══ -->
+<section class="slide">
+<div class="slide-inner">
+  <div class="kicker a" style="--i:0"><span>03</span> Подключение</div>
+  <h2 class="a" style="--i:1">Как подключиться к <em>Интернету</em>?</h2>
+  <p class="desc a" style="--i:2">Пользователь получает доступ через <b style="color:var(--blue)">провайдера</b> — фирму, локальная сеть которой непосредственно связана с Интернетом.</p>
+  <div class="grid-2 a" style="--i:3;margin-top:24px;grid-template-columns:1fr 1fr 1fr">
+    <div class="card">
+      <h3><span class="icon" style="background:rgba(240,136,62,.12);color:var(--orange)">☎</span> ADSL-модем</h3>
+      <p>Телефонная линия; можно одновременно звонить и работать в сети.</p>
+      <div style="margin-top:12px;font-family:var(--mono);font-size:1rem;color:var(--orange);font-weight:600">до 25 Мбит/с</div>
+    </div>
+    <div class="card">
+      <h3><span class="icon" style="background:rgba(88,166,255,.12);color:var(--blue)">⬡</span> Кабельная сеть</h3>
+      <p>Локальная сеть провайдера в доме. Телефонная линия не используется.</p>
+      <div style="margin-top:12px;font-family:var(--mono);font-size:1rem;color:var(--blue);font-weight:600">Ethernet</div>
+    </div>
+    <div class="card">
+      <h3><span class="icon" style="background:rgba(63,185,80,.12);color:var(--green)">◈</span> PON (оптика)</h3>
+      <p>Пассивная оптическая сеть: оптоволокно и разветвители без питания.</p>
+      <div style="margin-top:12px;font-family:var(--mono);font-size:1rem;color:var(--green);font-weight:600">до 2,5 Гбит/с</div>
+    </div>
+    <div class="card">
+      <h3><span class="icon" style="background:rgba(188,140,255,.12);color:var(--purple)">📶</span> USB-модем 3G/4G</h3>
+      <p>Сети сотовых операторов; работает везде, где есть мобильная связь.</p>
+      <div style="margin-top:12px;font-family:var(--mono);font-size:1rem;color:var(--purple);font-weight:600">3G: 10 Мбит/с · 4G: 1 Гбит/с</div>
+    </div>
+    <div class="card">
+      <h3><span class="icon" style="background:rgba(57,210,192,.12);color:var(--cyan)">◎</span> Wi-Fi</h3>
+      <p>Беспроводной канал связи, кабели к устройству не нужны.</p>
+      <div style="margin-top:12px;font-family:var(--mono);font-size:1rem;color:var(--cyan);font-weight:600">до 540 Мбит/с</div>
+    </div>
+    <div class="card" style="border-color:rgba(88,166,255,.2);background:linear-gradient(135deg,rgba(88,166,255,.05),rgba(188,140,255,.05))">
+      <h3 style="color:var(--blue)">⚡ Сравнение скоростей</h3>
+      <div style="margin-top:10px">
+        <div class="speed-row"><span class="speed-label">ADSL</span><div class="speed-track"><div class="speed-bar" style="--w:2%;background:var(--orange)"></div></div></div>
+        <div class="speed-row"><span class="speed-label">3G</span><div class="speed-track"><div class="speed-bar" style="--w:4%;background:var(--purple)"></div></div></div>
+        <div class="speed-row"><span class="speed-label">Wi-Fi</span><div class="speed-track"><div class="speed-bar" style="--w:22%;background:var(--cyan)"></div></div></div>
+        <div class="speed-row"><span class="speed-label">4G</span><div class="speed-track"><div class="speed-bar" style="--w:40%;background:var(--blue)"></div></div></div>
+        <div class="speed-row"><span class="speed-label">PON</span><div class="speed-track"><div class="speed-bar" style="--w:100%;background:linear-gradient(90deg,var(--green),var(--cyan))"></div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ═══ 5. ПРОТОКОЛЫ TCP/IP ═══ -->
+<section class="slide">
+<div class="slide-inner">
+  <div class="kicker a" style="--i:0"><span>04</span> Протоколы</div>
+  <h2 class="a" style="--i:1">Протоколы <em>TCP/IP</em></h2>
+  <div class="grid-2">
+    <div class="flex-col">
+      <p class="a" style="--i:2"><b style="color:var(--blue)">Протокол</b> — набор правил обмена данными. Источник и приёмник обязаны использовать один и тот же протокол. В Интернете применяется семейство <b style="color:var(--cyan)">TCP/IP</b>.</p>
+      <div class="card a" style="--i:3;border-left:3px solid var(--blue)">
+        <h3 style="color:var(--blue)">TCP — Transmission Control Protocol</h3>
+        <p>Устанавливает соединение и обеспечивает доставку данных. Блок данных разбивается на <b style="color:var(--text)">пакеты</b> (обычно не более 1,5 Кбайт).</p>
+      </div>
+      <div class="card a" style="--i:4;border-left:3px solid var(--purple)">
+        <h3 style="color:var(--purple)">IP — Internet Protocol</h3>
+        <p>Устанавливает правила построения пакета и систему IP-адресов, по которым маршрутизаторы определяют маршруты движения пакетов.</p>
+      </div>
+      <p class="a" style="--i:5;font-size:1.05rem">Службы Интернета (WWW, e-mail и др.) используют свои протоколы «верхнего уровня» поверх TCP/IP.</p>
+    </div>
+    <div class="a" style="--i:4;display:flex;flex-direction:column;align-items:center;gap:24px">
+      <div class="stack">
+        <div class="stack-layer" style="background:rgba(57,210,192,.08);color:var(--cyan)">HTTP, FTP, SMTP, DNS<div class="sub">Прикладной уровень (службы)</div></div>
+        <div class="stack-layer" style="background:rgba(88,166,255,.1);color:var(--blue)">TCP<div class="sub">Транспортный · доставка · пакеты ≤ 1,5 КБ</div></div>
+        <div class="stack-layer" style="background:rgba(188,140,255,.1);color:var(--purple)">IP<div class="sub">Сетевой · адресация · маршрутизация</div></div>
+        <div class="stack-layer" style="background:rgba(240,136,62,.08);color:var(--orange)">Ethernet, Wi-Fi, PPP<div class="sub">Канальный / физический уровень</div></div>
+      </div>
+      <div class="fig-frame" style="width:100%">
+        <svg viewBox="0 0 400 125" xmlns="http://www.w3.org/2000/svg">
+          <rect width="400" height="125" fill="#0d1117"/>
+          <text x="20" y="32" fill="#9aa7b4" font-size="13" font-family="monospace">Данные</text>
+          <rect x="80" y="15" width="60" height="25" rx="4" fill="#161b22" stroke="#58a6ff" stroke-width="1.5"/>
+          <rect x="150" y="15" width="60" height="25" rx="4" fill="#161b22" stroke="#58a6ff" stroke-width="1.5"/>
+          <rect x="220" y="15" width="60" height="25" rx="4" fill="#161b22" stroke="#58a6ff" stroke-width="1.5"/>
+          <text x="110" y="32" text-anchor="middle" fill="#58a6ff" font-size="10" font-family="monospace">пакет 1</text>
+          <text x="180" y="32" text-anchor="middle" fill="#58a6ff" font-size="10" font-family="monospace">пакет 2</text>
+          <text x="250" y="32" text-anchor="middle" fill="#58a6ff" font-size="10" font-family="monospace">пакет 3</text>
+          <path d="M110 45v15" stroke="#9aa7b4" stroke-width="1"/>
+          <path d="M180 45v15" stroke="#9aa7b4" stroke-width="1"/>
+          <path d="M250 45v15" stroke="#9aa7b4" stroke-width="1"/>
+          <rect x="85" y="65" width="50" height="20" rx="3" fill="rgba(188,140,255,.15)" stroke="#bc8cff" stroke-width="1"/>
+          <rect x="155" y="65" width="50" height="20" rx="3" fill="rgba(188,140,255,.15)" stroke="#bc8cff" stroke-width="1"/>
+          <rect x="225" y="65" width="50" height="20" rx="3" fill="rgba(188,140,255,.15)" stroke="#bc8cff" stroke-width="1"/>
+          <text x="110" y="79" text-anchor="middle" fill="#bc8cff" font-size="9" font-family="monospace">IP</text>
+          <text x="180" y="79" text-anchor="middle" fill="#bc8cff" font-size="9" font-family="monospace">IP</text>
+          <text x="250" y="79" text-anchor="middle" fill="#bc8cff" font-size="9" font-family="monospace">IP</text>
+          <path d="M80 100h260" stroke="#21262d" stroke-width="2"/>
+          <circle r="4" fill="#3fb950"><animateMotion dur="2s" repeatCount="indefinite" path="M80,100 L340,100"/></circle>
+          <text x="200" y="118" text-anchor="middle" fill="#9aa7b4" font-size="11" font-family="monospace">передача по сети</text>
+        </svg>
+        <div class="fig-caption">TCP разбивает данные на пакеты, IP добавляет адреса</div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ═══ 6. IPv4 ═══ -->
+<section class="slide">
+<div class="slide-inner">
+  <div class="kicker a" style="--i:0"><span>05</span> Адресация</div>
+  <h2 class="a" style="--i:1"><em>IP-адреса</em>: IPv4</h2>
+  <div class="grid-2">
+    <div class="flex-col">
+      <p class="a" style="--i:2">Каждый компьютер в Интернете должен иметь <b style="color:var(--blue)">уникальный адрес</b>. IP-адрес — это 32-битное число.</p>
+      <div class="a" style="--i:3">
+        <div style="font-family:var(--mono);font-size:.95rem;color:var(--muted);margin-bottom:6px">Двоичная запись (32 бита):</div>
+        <div style="font-family:var(--mono);font-size:1.05rem;color:var(--purple);word-break:break-all;line-height:1.6">11000000.10101000.01101000.01110011</div>
+      </div>
+      <div class="a" style="--i:4">
+        <div style="font-family:var(--mono);font-size:.95rem;color:var(--muted);margin-bottom:8px">Десятичная запись (4 октета):</div>
+        <div class="ip-visual">
+          <div><div class="ip-octet" style="color:var(--blue)">192</div><div class="ip-bracket">сеть</div></div>
+          <span class="ip-dot">.</span>
+          <div><div class="ip-octet" style="color:var(--blue)">168</div><div class="ip-bracket">сеть</div></div>
+          <span class="ip-dot">.</span>
+          <div><div class="ip-octet" style="color:var(--cyan)">104</div><div class="ip-bracket">узел</div></div>
+          <span class="ip-dot">.</span>
+          <div><div class="ip-octet" style="color:var(--cyan)">115</div><div class="ip-bracket">узел</div></div>
+        </div>
+      </div>
+      <p class="a" style="--i:5">В IP-адресе закодированы <b style="color:var(--blue)">номер сети</b> и <b style="color:var(--cyan)">номер компьютера</b> — как почтовый индекс и адрес улицы, дома, квартиры.</p>
+      <p class="a" style="--i:6;color:var(--orange)">Каждое из четырёх чисел октета находится в диапазоне <b>0–255</b> (8 бит = 2⁸ значений).</p>
+      <p class="a" style="--i:7">IP-адрес присваивается <b style="color:var(--text)">каналу связи</b>, а не компьютеру: у одного ПК может быть несколько адресов (сетевая карта + Wi-Fi).</p>
+    </div>
+    <div class="a" style="--i:5">
+      <div class="fig-frame">
+        <svg viewBox="0 0 440 400" xmlns="http://www.w3.org/2000/svg">
+          <rect width="440" height="400" fill="#0d1117"/>
+          <text x="220" y="35" text-anchor="middle" fill="#9aa7b4" font-size="14" font-family="monospace">Структура IPv4-адреса</text>
+          <g transform="translate(40,60)">
+            <g font-family="monospace">
+              <rect x="0" y="0" width="85" height="38" rx="4" fill="rgba(88,166,255,.1)" stroke="#58a6ff" stroke-width="1.5"/>
+              <text x="42" y="15" text-anchor="middle" fill="#58a6ff" font-size="9">октет 1</text>
+              <text x="42" y="31" text-anchor="middle" fill="#58a6ff" font-size="14" font-weight="bold">192</text>
+              <rect x="92" y="0" width="85" height="38" rx="4" fill="rgba(88,166,255,.1)" stroke="#58a6ff" stroke-width="1.5"/>
+              <text x="134" y="15" text-anchor="middle" fill="#58a6ff" font-size="9">октет 2</text>
+              <text x="134" y="31" text-anchor="middle" fill="#58a6ff" font-size="14" font-weight="bold">168</text>
+              <rect x="184" y="0" width="85" height="38" rx="4" fill="rgba(57,210,192,.1)" stroke="#39d2c0" stroke-width="1.5"/>
+              <text x="226" y="15" text-anchor="middle" fill="#39d2c0" font-size="9">октет 3</text>
+              <text x="226" y="31" text-anchor="middle" fill="#39d2c0" font-size="14" font-weight="bold">104</text>
+              <rect x="276" y="0" width="85" height="38" rx="4" fill="rgba(57,210,192,.1)" stroke="#39d2c0" stroke-width="1.5"/>
+              <text x="318" y="15" text-anchor="middle" fill="#39d2c0" font-size="9">октет 4</text>
+              <text x="318" y="31" text-anchor="middle" fill="#39d2c0" font-size="14" font-weight="bold">115</text>
+            </g>
+            <path d="M0 46v10h177v-10" fill="none" stroke="#58a6ff" stroke-width="1.5"/>
+            <text x="88" y="74" text-anchor="middle" fill="#58a6ff" font-size="13" font-family="monospace">Номер сети</text>
+            <path d="M184 46v10h177v-10" fill="none" stroke="#39d2c0" stroke-width="1.5"/>
+            <text x="272" y="74" text-anchor="middle" fill="#39d2c0" font-size="13" font-family="monospace">Номер узла</text>
+          </g>
+          <g transform="translate(40,180)">
+            <rect x="0" y="0" width="360" height="85" rx="10" fill="#161b22" stroke="#21262d"/>
+            <text x="20" y="27" fill="#f0883e" font-size="13" font-family="monospace">Аналогия с почтой:</text>
+            <text x="20" y="50" fill="#9aa7b4" font-size="14" font-family="sans-serif">Индекс → почтовое отделение (сеть)</text>
+            <text x="20" y="71" fill="#9aa7b4" font-size="14" font-family="sans-serif">Адрес → улица, дом, квартира (узел)</text>
+          </g>
+          <g transform="translate(40,295)">
+            <text x="0" y="0" fill="#9aa7b4" font-size="12" font-family="monospace">32-битное число = 4 × 8 бит</text>
+            <text x="0" y="24" fill="#bc8cff" font-size="13" font-family="monospace">Октет: 00000000₂ – 11111111₂</text>
+            <text x="0" y="46" fill="#bc8cff" font-size="13" font-family="monospace">Десятичный вид: 0 – 255</text>
+            <text x="0" y="74" fill="#f85149" font-size="13" font-family="monospace">Всего адресов: 2³² ≈ 4,3 млрд — мало!</text>
+          </g>
+        </svg>
+        <div class="fig-caption">IPv4: 32 бита, 4 октета, диапазон каждого 0–255</div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ═══ 7. IPv6 ═══ -->
+<section class="slide">
+<div class="slide-inner">
+  <div class="kicker a" style="--i:0"><span>06</span> Новая версия</div>
+  <h2 class="a" style="--i:1">Переход на <em>IPv6</em></h2>
+  <div class="grid-2">
+    <div class="flex-col">
+      <p class="a" style="--i:2">Из-за бурного развития Интернета адресов IPv4 уже <b style="color:var(--red)">не хватает</b> для всех желающих. Разработана новая система адресов — <b style="color:var(--purple)">IPv6</b>.</p>
+      <div class="card a" style="--i:3;border-left:3px solid var(--purple)">
+        <h3 style="color:var(--purple)">128 бит вместо 32</h3>
+        <p>Адрес записывается в виде 8 групп по 4 шестнадцатеричные цифры, разделённые двоеточиями:</p>
+        <div class="ipv6-visual">2001:0DB8:11A3:09D7:1F34:8A2E:07A0:765D</div>
+        <p style="margin-top:10px;font-size:1rem;color:var(--muted)">Количество адресов: 2¹²⁸ ≈ 3,4 × 10³⁸ — хватит надолго!</p>
+      </div>
+      <p class="a" style="--i:4">Полный переход на IPv6 займёт несколько лет: он потребует больших денежных затрат и замены всех устаревших устройств.</p>
+    </div>
+    <div class="a" style="--i:3">
+      <div class="fig-frame">
+        <svg viewBox="0 0 440 360" xmlns="http://www.w3.org/2000/svg">
+          <rect width="440" height="360" fill="#0d1117"/>
+          <text x="220" y="32" text-anchor="middle" fill="#9aa7b4" font-size="14" font-family="monospace">Сравнение IPv4 и IPv6</text>
+          <rect x="40" y="55" width="100" height="42" rx="6" fill="rgba(88,166,255,.12)" stroke="#58a6ff" stroke-width="1.5"/>
+          <text x="90" y="82" text-anchor="middle" fill="#58a6ff" font-size="15" font-family="monospace" font-weight="bold">IPv4</text>
+          <rect x="40" y="107" width="100" height="16" rx="3" fill="#58a6ff" opacity=".6"/>
+          <text x="90" y="145" text-anchor="middle" fill="#9aa7b4" font-size="13" font-family="monospace">32 бита</text>
+          <text x="90" y="167" text-anchor="middle" fill="#9aa7b4" font-size="12" font-family="monospace">~4,3 млрд</text>
+          <path d="M165 76h40" stroke="#f0883e" stroke-width="2" marker-end="url(#arw)"/>
+          <rect x="220" y="55" width="180" height="42" rx="6" fill="rgba(188,140,255,.12)" stroke="#bc8cff" stroke-width="1.5"/>
+          <text x="310" y="82" text-anchor="middle" fill="#bc8cff" font-size="15" font-family="monospace" font-weight="bold">IPv6</text>
+          <rect x="220" y="107" width="0" height="16" rx="3" fill="#bc8cff" opacity=".6">
+            <animate attributeName="width" from="0" to="180" dur="1.5s" begin="0.5s" fill="freeze"/>
+          </rect>
+          <text x="310" y="145" text-anchor="middle" fill="#9aa7b4" font-size="13" font-family="monospace">128 бит</text>
+          <text x="310" y="167" text-anchor="middle" fill="#9aa7b4" font-size="12" font-family="monospace">~3,4×10³⁸</text>
+          <g transform="translate(55,205)">
+            <text x="0" y="0" fill="#bc8cff" font-size="12" font-family="monospace">8 групп × 4 hex-цифры:</text>
+            <g transform="translate(0,15)">
+              <rect x="0" y="0" width="52" height="30" rx="4" fill="#161b22" stroke="#bc8cff" stroke-width="1"/><text x="26" y="20" text-anchor="middle" fill="#bc8cff" font-size="11" font-family="monospace">2001</text>
+              <text x="57" y="20" fill="#9aa7b4" font-size="14">:</text>
+              <rect x="64" y="0" width="52" height="30" rx="4" fill="#161b22" stroke="#bc8cff" stroke-width="1"/><text x="90" y="20" text-anchor="middle" fill="#bc8cff" font-size="11" font-family="monospace">0DB8</text>
+              <text x="121" y="20" fill="#9aa7b4" font-size="14">:</text>
+              <rect x="128" y="0" width="52" height="30" rx="4" fill="#161b22" stroke="#bc8cff" stroke-width="1"/><text x="154" y="20" text-anchor="middle" fill="#bc8cff" font-size="11" font-family="monospace">11A3</text>
+              <text x="185" y="20" fill="#9aa7b4" font-size="14">:</text>
+              <rect x="192" y="0" width="52" height="30" rx="4" fill="#161b22" stroke="#bc8cff" stroke-width="1"/><text x="218" y="20" text-anchor="middle" fill="#bc8cff" font-size="11" font-family="monospace">09D7</text>
+            </g>
+            <g transform="translate(0,54)">
+              <rect x="0" y="0" width="52" height="30" rx="4" fill="#161b22" stroke="#bc8cff" stroke-width="1"/><text x="26" y="20" text-anchor="middle" fill="#bc8cff" font-size="11" font-family="monospace">1F34</text>
+              <text x="57" y="20" fill="#9aa7b4" font-size="14">:</text>
+              <rect x="64" y="0" width="52" height="30" rx="4" fill="#161b22" stroke="#bc8cff" stroke-width="1"/><text x="90" y="20" text-anchor="middle" fill="#bc8cff" font-size="11" font-family="monospace">8A2E</text>
+              <text x="121" y="20" fill="#9aa7b4" font-size="14">:</text>
+              <rect x="128" y="0" width="52" height="30" rx="4" fill="#161b22" stroke="#bc8cff" stroke-width="1"/><text x="154" y="20" text-anchor="middle" fill="#bc8cff" font-size="11" font-family="monospace">07A0</text>
+              <text x="185" y="20" fill="#9aa7b4" font-size="14">:</text>
+              <rect x="192" y="0" width="52" height="30" rx="4" fill="#161b22" stroke="#bc8cff" stroke-width="1"/><text x="218" y="20" text-anchor="middle" fill="#bc8cff" font-size="11" font-family="monospace">765D</text>
+            </g>
+          </g>
+          <defs><marker id="arw" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#f0883e"/></marker></defs>
+        </svg>
+        <div class="fig-caption">IPv6 решает проблему нехватки адресов</div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ═══ 8. ДОМЕНЫ И DNS ═══ -->
+<section class="slide">
+<div class="slide-inner">
+  <div class="kicker a" style="--i:0"><span>07</span> Домены</div>
+  <h2 class="a" style="--i:1">Доменные имена и <em>DNS</em></h2>
+  <p class="desc a" style="--i:2">Человеку неудобно работать с числовыми адресами — они плохо запоминаются. В <b style="color:var(--blue)">1984 году</b> разработана система доменных имён <b style="color:var(--cyan)">DNS</b>, позволившая использовать символьные имена сайтов: <span style="font-family:var(--mono);color:var(--cyan)">www.mail.ru</span></p>
+  <div class="grid-2" style="margin-top:20px">
+    <div class="a" style="--i:3">
+      <div class="dns-tree">
+        <div class="dns-level"><div class="dns-node root">. (корень)</div></div>
+        <div class="dns-connector"></div>
+        <div class="dns-level">
+          <div class="dns-node" style="border-color:var(--orange);color:var(--orange)">ru</div>
+          <div class="dns-node" style="border-color:var(--orange);color:var(--orange)">com</div>
+          <div class="dns-node" style="border-color:var(--orange);color:var(--orange)">org</div>
+          <div class="dns-node" style="border-color:var(--orange);color:var(--orange)">net</div>
+          <div class="dns-node" style="border-color:var(--orange);color:var(--orange)">рф</div>
+        </div>
+        <div class="dns-connector"></div>
+        <div class="dns-level">
+          <div class="dns-node" style="border-color:var(--blue);color:var(--blue)">mail.ru</div>
+          <div class="dns-node" style="border-color:var(--blue);color:var(--blue)">yandex.ru</div>
+          <div class="dns-node" style="border-color:var(--blue);color:var(--blue)">google.com</div>
+        </div>
+        <div class="dns-connector"></div>
+        <div class="dns-level">
+          <div class="dns-node" style="border-color:var(--green);color:var(--green)">www.mail.ru</div>
+          <div class="dns-node" style="border-color:var(--green);color:var(--green)">news.yandex.ru</div>
+        </div>
+      </div>
+      <p style="font-size:1.02rem;margin-top:14px;color:var(--muted)">Домены образуют иерархию, вкладываясь друг в друга как матрёшки. Домены <b style="color:var(--orange)">ru, рф, su</b> принадлежат России; общие домены: <b style="color:var(--orange)">com, net, org, biz, info, name, museum</b>.</p>
+    </div>
+    <div class="flex-col a" style="--i:4">
+      <div class="card" style="border-left:3px solid var(--cyan)">
+        <h3 style="color:var(--cyan)">DNS-сервер</h3>
+        <p>Хранит таблицы пар <b style="color:var(--text)">«IP-адрес ↔ доменное имя»</b>. Задача — по запросу клиента вернуть IP-адрес для заданного доменного имени (или наоборот).</p>
+      </div>
+      <div class="card" style="border-left:3px solid var(--green)">
+        <h3 style="color:var(--green)">Многозначные соответствия</h3>
+        <p>Одному домену могут соответствовать <b style="color:var(--text)">несколько IP-адресов</b> — распределение нагрузки (www.yandex.ru, www.google.com). Несколько небольших сайтов могут жить на одном IP-адресе.</p>
+      </div>
+      <div class="fig-frame">
+        <svg viewBox="0 0 400 100" xmlns="http://www.w3.org/2000/svg">
+          <rect width="400" height="100" fill="#0d1117"/>
+          <rect x="10" y="25" width="110" height="50" rx="8" fill="#161b22" stroke="#39d2c0" stroke-width="1.5"/>
+          <text x="65" y="55" text-anchor="middle" fill="#39d2c0" font-size="12" font-family="monospace">www.mail.ru</text>
+          <path d="M125 50h45" stroke="#9aa7b4" stroke-width="1.5" stroke-dasharray="4 3"/>
+          <text x="147" y="40" text-anchor="middle" fill="#f0883e" font-size="11" font-family="monospace">DNS</text>
+          <rect x="170" y="25" width="90" height="50" rx="8" fill="#161b22" stroke="#f0883e" stroke-width="1.5"/>
+          <text x="215" y="55" text-anchor="middle" fill="#f0883e" font-size="11" font-family="monospace">DNS-сервер</text>
+          <path d="M265 50h40" stroke="#9aa7b4" stroke-width="1.5" stroke-dasharray="4 3"/>
+          <rect x="305" y="25" width="85" height="50" rx="8" fill="#161b22" stroke="#58a6ff" stroke-width="1.5"/>
+          <text x="347" y="55" text-anchor="middle" fill="#58a6ff" font-size="11" font-family="monospace">192.168…</text>
+        </svg>
+        <div class="fig-caption">DNS преобразует символьное имя в числовой IP-адрес</div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ═══ 9. ЗАДАЧИ: IP-АДРЕС ═══ -->
+<section class="slide">
+<div class="slide-inner">
+  <div class="kicker a" style="--i:0"><span>08</span> практика</div>
+  <h2 class="a" style="--i:1">Задачи: сборка <em>IP-адреса</em></h2>
+  <div class="teacher-note a" style="--i:2">Учитель: нажмите «Показать ответ», чтобы открыть решение</div>
+  <div class="grid-2" style="align-items:start">
+    <div class="task-card a" style="--i:3">
+      <span class="task-num">Задача 1 · по номерам сети и узла</span>
+      <div class="task-text">Компьютер подключён к сети номер <span class="mono">172.16.20</span>, а его собственный номер в этой сети — <span class="mono">45</span>. Соберите IP-адрес этого компьютера.</div>
+      <div class="task-hint">Подсказка: IP-адрес — это четыре числа от 0 до 255, разделённые точками: сначала номер сети, затем номер узла.</div>
+      <button class="reveal-btn"><span class="eye">◉</span><span class="btn-label">Показать ответ</span></button>
+      <div class="answer">
+        <div class="answer-inner">
+          <div class="answer-label">Правильный ответ</div>
+          <div class="answer-val">172.16.20.45</div>
+          <div class="answer-explain"><b>Решение:</b> соединяем номер сети <span class="mono">172.16.20</span> и номер узла <span class="mono">45</span> через точку. Получаем четыре октета: <span class="mono">172 · 16 · 20 · 45</span>. Это похоже на почтовый адрес: индекс (сеть) + улица и дом (узел).</div>
+        </div>
+      </div>
+    </div>
+    <div class="task-card a" style="--i:4">
+      <span class="task-num">Задача 2 · из двоичной записи</span>
+      <div class="task-text">Дан 32-битный адрес в двоичном виде: <span class="mono">11000000.10101000.01101000.01110011</span>. Переведите каждый октет в десятичную систему и соберите IP-адрес.</div>
+      <div class="task-hint">Подсказка: каждый октет — 8 бит; переведите его в десятичную систему (получится число от 0 до 255) и запишите октеты через точку.</div>
+      <button class="reveal-btn"><span class="eye">◉</span><span class="btn-label">Показать ответ</span></button>
+      <div class="answer">
+        <div class="answer-inner">
+          <div class="answer-label">Правильный ответ</div>
+          <div class="answer-val">192.168.104.115</div>
+          <div class="answer-explain"><b>Решение:</b> <span class="mono">11000000₂ = 192</span> · <span class="mono">10101000₂ = 168</span> · <span class="mono">01101000₂ = 104</span> · <span class="mono">01110011₂ = 115</span>. Записываем четыре числа через точку: <span class="mono">192.168.104.115</span>.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ═══ 10. ЗАДАЧИ: АДРЕС САЙТА ═══ -->
+<section class="slide">
+<div class="slide-inner">
+  <div class="kicker a" style="--i:0"><span>09</span> практика</div>
+  <h2 class="a" style="--i:1">Задачи: сборка <em>адреса сайта</em></h2>
+  <div class="teacher-note a" style="--i:2">Учитель: нажмите «Показать ответ», чтобы открыть решение</div>
+  <div class="grid-2" style="align-items:start">
+    <div class="task-card a" style="--i:3">
+      <span class="task-num">Задача 1 · из частей</span>
+      <div class="task-text">Соберите адрес сайта из частей: протокол — <span class="mono">https</span>, имя сервера — <span class="mono">www</span>, домен второго уровня — <span class="mono">mail</span>, домен верхнего уровня — <span class="mono">ru</span>.</div>
+      <div class="task-hint">Подсказка: адрес читается по дереву доменов справа налево: страна → домен второго уровня → сервер. Протокол записывается первым и отделяется «://».</div>
+      <button class="reveal-btn"><span class="eye">◉</span><span class="btn-label">Показать ответ</span></button>
+      <div class="answer">
+        <div class="answer-inner">
+          <div class="answer-label">Правильный ответ</div>
+          <div class="answer-val">https://www.mail.ru</div>
+          <div class="answer-explain"><b>Решение:</b> сначала протокол <span class="mono">https://</span>, затем слева направо от младшего к старшему домену: <span class="mono">www</span> (сервер) → <span class="mono">mail</span> (домен 2-го уровня) → <span class="mono">ru</span> (домен страны).</div>
+        </div>
+      </div>
+    </div>
+    <div class="task-card a" style="--i:4">
+      <span class="task-num">Задача 2 · элементы перепутаны</span>
+      <div class="task-text">Элементы адреса сайта записаны вперемешку: <span class="mono">com &nbsp;·&nbsp; www &nbsp;·&nbsp; https:// &nbsp;·&nbsp; google</span>. Соберите из них полный правильный адрес.</div>
+      <div class="task-hint">Подсказка: найдите протокол (со «://»), затем имя сервера, домен второго уровня и в самом конце — домен верхнего уровня.</div>
+      <button class="reveal-btn"><span class="eye">◉</span><span class="btn-label">Показать ответ</span></button>
+      <div class="answer">
+        <div class="answer-inner">
+          <div class="answer-label">Правильный ответ</div>
+          <div class="answer-val">https://www.google.com</div>
+          <div class="answer-explain"><b>Решение:</b> протокол <span class="mono">https://</span> стоит первым; <span class="mono">www</span> — имя сервера; <span class="mono">google</span> — домен второго уровня; <span class="mono">com</span> — общий домен верхнего уровня. Порядок: протокол → сервер → домен → домен верхнего уровня.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ═══ 11. КАК РАБОТАЕТ ЗАПРОС ═══ -->
+<section class="slide">
+<div class="slide-inner">
+  <div class="kicker a" style="--i:0"><span>10</span> процесс</div>
+  <h2 class="a" style="--i:1">Как работает <em>запрос сайта</em>?</h2>
+  <p class="desc a" style="--i:2">Когда вы вводите адрес сайта в адресной строке браузера, происходит цепочка действий:</p>
+  <div class="flow a" style="--i:3">
+    <div class="flow-step"><span class="num">ШАГ 1</span><span class="label">Вы вводите<br><b style="color:var(--cyan)">www.mail.ru</b></span></div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step"><span class="num">ШАГ 2</span><span class="label">Запрос к<br><b style="color:var(--orange)">DNS-серверу</b></span></div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step"><span class="num">ШАГ 3</span><span class="label">DNS возвращает<br><b style="color:var(--blue)">IP-адрес</b></span></div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step"><span class="num">ШАГ 4</span><span class="label">TCP/IP запрос<br>к <b style="color:var(--purple)">серверу</b></span></div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step"><span class="num">ШАГ 5</span><span class="label">Сервер отдаёт<br><b style="color:var(--green)">страницу</b></span></div>
+  </div>
+  <div class="grid-2 a" style="--i:5;margin-top:28px">
+    <div class="card">
+      <h3 style="color:var(--blue)">Маршрутизация пакетов</h3>
+      <p>Маршрутизаторы направляют каждый пакет кратчайшим путём. Если канал недоступен — пакет идёт по обходному маршруту. Данные собираются на стороне получателя.</p>
+    </div>
+    <div class="card">
+      <h3 style="color:var(--green)">Технология клиент-сервер</h3>
+      <p>Программа-клиент (браузер) отправляет запрос. Сервер обрабатывает его и возвращает ответ. Практически все услуги Интернета работают по этой схеме.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ═══ 12. ВЫВОДЫ ═══ -->
+<section class="slide">
+<div class="slide-inner">
+  <div class="kicker a" style="--i:0"><span>11</span> итоги</div>
+  <h2 class="a" style="--i:1"><em>Выводы</em></h2>
+  <div class="flex-col a" style="--i:2;gap:12px">
+    <div class="concl-item">
+      <span class="ci-icon">🌐</span>
+      <span class="ci-text">Интернет <b>не имеет единого центра управления</b> и никому не принадлежит. Это распределённая сеть, устойчивая к выходу из строя отдельных узлов.</span>
+    </div>
+    <div class="concl-item">
+      <span class="ci-icon">⟁</span>
+      <span class="ci-text"><b>Маршрутизатор</b> — компьютер, пересылающий пакеты данных между участками сети по кратчайшему рабочему маршруту.</span>
+    </div>
+    <div class="concl-item">
+      <span class="ci-icon">📦</span>
+      <span class="ci-text">Для обмена данными используются протоколы семейства <b>TCP/IP</b>. Каждая служба (WWW, e-mail) имеет свой протокол верхнего уровня.</span>
+    </div>
+    <div class="concl-item">
+      <span class="ci-icon">🔢</span>
+      <span class="ci-text"><b>IP-адрес</b> — уникальный числовой адрес узла сети. IPv4 = 32 бита (4 октета 0–255), IPv6 = 128 бит (8 групп hex-цифр).</span>
+    </div>
+    <div class="concl-item">
+      <span class="ci-icon">🏷️</span>
+      <span class="ci-text"><b>Доменное имя</b> — символьное имя сайта. Для преобразования доменных имён в IP-адреса используются <b>DNS-серверы</b>.</span>
+    </div>
+  </div>
+  <div class="keywords a" style="--i:5;margin-top:28px;justify-content:center">
+    <span class="kw">маршрутизатор</span><span class="kw">провайдер</span><span class="kw">TCP/IP</span><span class="kw">IP-адрес</span><span class="kw">домен</span><span class="kw">DNS</span>
+  </div>
+</div>
+</section>
+
+</main>
+
+<div class="hint" id="hint"><kbd>←</kbd> <kbd>→</kbd> навигация · <kbd>F</kbd> полный экран</div>
+
+<div class="controls">
+  <button class="ctrl-btn" id="btnFS" title="На весь экран (F)">
+    <svg viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3"/></svg>
+  </button>
+  <button class="ctrl-btn" id="btnPrev" title="Назад (←)">
+    <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+  </button>
+  <div class="dots" id="dots"></div>
+  <button class="ctrl-btn primary" id="btnNext" title="Вперёд (→)">
+    <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+  </button>
+</div>
+
+<script>
+(function(){
+"use strict";
+const slides=[...document.querySelectorAll('.slide')];
+const N=slides.length;
+let cur=0;
+const dotsBox=document.getElementById('dots');
+const cCur=document.getElementById('cCur');
+const cTot=document.getElementById('cTot');
+const progFill=document.getElementById('progFill');
+const btnPrev=document.getElementById('btnPrev');
+const btnNext=document.getElementById('btnNext');
+const btnFS=document.getElementById('btnFS');
+const hint=document.getElementById('hint');
+cTot.textContent=String(N).padStart(2,'0');
+
+for(let i=0;i<N;i++){
+  const d=document.createElement('button');
+  d.className='dot'+(i===0?' active':'');
+  d.setAttribute('aria-label','Слайд '+(i+1));
+  d.addEventListener('click',()=>goTo(i));
+  dotsBox.appendChild(d);
+}
+const dots=[...dotsBox.children];
+
+/* скрытые ответы задач */
+function hideAllAnswers(){
+  document.querySelectorAll('.answer.open').forEach(a=>a.classList.remove('open'));
+  document.querySelectorAll('.reveal-btn.opened').forEach(b=>{
+    b.classList.remove('opened');
+    b.querySelector('.btn-label').textContent='Показать ответ';
+  });
+}
+document.querySelectorAll('.reveal-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    const ans=btn.parentElement.querySelector('.answer');
+    const open=ans.classList.toggle('open');
+    btn.classList.toggle('opened',open);
+    btn.querySelector('.btn-label').textContent=open?'Скрыть ответ':'Показать ответ';
+  });
+});
+
+function paint(){
+  slides.forEach((s,i)=>{
+    s.classList.remove('active','exit-up');
+    if(i===cur)s.classList.add('active');
+    else if(i<cur)s.classList.add('exit-up');
+  });
+  dots.forEach((d,i)=>d.classList.toggle('active',i===cur));
+  cCur.textContent=String(cur+1).padStart(2,'0');
+  progFill.style.width=((cur+1)/N*100)+'%';
+  btnPrev.disabled=cur===0;
+  btnNext.disabled=cur===N-1;
+}
+function goTo(n){
+  n=Math.max(0,Math.min(N-1,n));
+  if(n===cur)return;
+  hideAllAnswers();
+  cur=n;paint();hint.classList.add('hidden');
+}
+btnPrev.addEventListener('click',()=>goTo(cur-1));
+btnNext.addEventListener('click',()=>goTo(cur+1));
+
+document.addEventListener('keydown',e=>{
+  if(['ArrowRight','ArrowDown','PageDown',' '].includes(e.key)){e.preventDefault();goTo(cur+1);}
+  else if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){e.preventDefault();goTo(cur-1);}
+  else if(e.key==='Home'){e.preventDefault();goTo(0);}
+  else if(e.key==='End'){e.preventDefault();goTo(N-1);}
+  else if(e.key==='f'||e.key==='F'||e.key==='а'||e.key==='А')toggleFS();
+  else if(e.key==='Escape'&&document.fullscreenElement)document.exitFullscreen();
+});
+
+let tx=0;
+document.addEventListener('touchstart',e=>{tx=e.touches[0].clientX},{passive:true});
+document.addEventListener('touchend',e=>{
+  const dx=e.changedTouches[0].clientX-tx;
+  if(Math.abs(dx)>50)goTo(cur+(dx<0?1:-1));
+},{passive:true});
+
+function toggleFS(){
+  try{
+    if(!document.fullscreenElement)document.documentElement.requestFullscreen?.();
+    else document.exitFullscreen?.();
+  }catch(e){}
+}
+btnFS.addEventListener('click',toggleFS);
+
+/* фоновая сеть */
+const cv=document.getElementById('netCanvas');
+const cx=cv.getContext('2d');
+const reduced=matchMedia('(prefers-reduced-motion:reduce)').matches;
+let W,H,pts=[],raf=null;
+const mouse={x:-9e3,y:-9e3};
+function seed(){return{x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,r:.7+Math.random()*1.5,c:Math.random()<.5?'88,166,255':'188,140,255'};}
+function resize(){
+  const dpr=Math.min(2,devicePixelRatio||1);
+  W=innerWidth;H=innerHeight;
+  cv.width=W*dpr;cv.height=H*dpr;
+  cv.style.width=W+'px';cv.style.height=H+'px';
+  cx.setTransform(dpr,0,0,dpr,0,0);
+  const n=Math.min(60,Math.round(W*H/25000));
+  while(pts.length<n)pts.push(seed());
+  pts.length=n;
+  if(reduced)draw();
+}
+function draw(){
+  cx.clearRect(0,0,W,H);
+  for(let i=0;i<pts.length;i++){
+    const p=pts[i];
+    p.x+=p.vx;p.y+=p.vy;
+    if(p.x<0)p.x=W;if(p.x>W)p.x=0;if(p.y<0)p.y=H;if(p.y>H)p.y=0;
+    const dx=p.x-mouse.x,dy=p.y-mouse.y,dm=Math.hypot(dx,dy);
+    if(dm<130&&dm>0){p.x+=dx/dm*.6;p.y+=dy/dm*.6;}
+    for(let j=i+1;j<pts.length;j++){
+      const q=pts[j],d=Math.hypot(p.x-q.x,p.y-q.y);
+      if(d<140){
+        cx.strokeStyle='rgba('+(p.c===q.c?p.c:'130,160,200')+','+((1-d/140)*.12)+')';
+        cx.lineWidth=.8;cx.beginPath();cx.moveTo(p.x,p.y);cx.lineTo(q.x,q.y);cx.stroke();
+      }
+    }
+    cx.fillStyle='rgba('+p.c+',.6)';
+    cx.beginPath();cx.arc(p.x,p.y,p.r,0,6.283);cx.fill();
+  }
+}
+function loop(){draw();raf=requestAnimationFrame(loop);}
+window.addEventListener('resize',resize);
+document.addEventListener('mousemove',e=>{mouse.x=e.clientX;mouse.y=e.clientY});
+document.addEventListener('mouseleave',()=>{mouse.x=-9e3;mouse.y=-9e3});
+document.addEventListener('visibilitychange',()=>{
+  if(reduced)return;
+  if(document.hidden){cancelAnimationFrame(raf);raf=null;}
+  else if(!raf)loop();
+});
+resize();
+if(!reduced)loop();
+
+paint();
+})();
+</script>
+</body>
+</html>
+
